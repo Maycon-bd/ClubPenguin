@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ambientes virtuais
+venv/
+env/
+.env
+.venv
+
+# Dataset local (será baixado automaticamente)
+penguins.csv
+
+# Imagens de teste locais
+test_gentoo.jpg
+*.jpg
+*.jpeg
+*.png
+!docs/
+
+# Modelos grandes (PyTorch / HuggingFace cache)
+*.bin
+*.safetensors
+
+# Cache do Hugging Face
+~/.cache/huggingface/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
+
+# PDF do tutorial (arquivo pesado)
+*.pdf
