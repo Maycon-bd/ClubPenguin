@@ -1,4 +1,4 @@
-# app.py
+# app.py — MatoScan
 import streamlit as st
 import pandas as pd
 import joblib
@@ -10,91 +10,87 @@ import torch
 from transformers import CLIPProcessor, CLIPModel
 import time
 
-# Configuração da página do Streamlit
+# ─── Configuração da página ───────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Mecanismo de Classificação - Palmer Penguins",
-    page_icon="⚙️",
+    page_title="MatoScan — Identificador de Culturas",
+    page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Configurar estilo global do matplotlib para combinar com o tema steampunk minimalista
-plt.rcParams['text.color'] = '#dfd5c6'
-plt.rcParams['axes.labelcolor'] = '#dfd5c6'
-plt.rcParams['xtick.color'] = '#a49788'
-plt.rcParams['ytick.color'] = '#a49788'
-plt.rcParams['figure.facecolor'] = '#1a1615'
-plt.rcParams['axes.facecolor'] = '#1a1615'
-plt.rcParams['axes.edgecolor'] = '#3c3029'
-plt.rcParams['grid.color'] = '#3c3029'
+# ─── Tema matplotlib AgroTech ─────────────────────────────────────────────────
+plt.rcParams['text.color']        = '#d4ecd4'
+plt.rcParams['axes.labelcolor']   = '#d4ecd4'
+plt.rcParams['xtick.color']       = '#7bab7b'
+plt.rcParams['ytick.color']       = '#7bab7b'
+plt.rcParams['figure.facecolor']  = '#0f1f0f'
+plt.rcParams['axes.facecolor']    = '#0f1f0f'
+plt.rcParams['axes.edgecolor']    = '#2d5a2d'
+plt.rcParams['grid.color']        = '#1e3d1e'
 
-# Estilização CSS personalizada para tema Steampunk Minimalista com fontes evidentes
+# ─── CSS Personalizado — Tema AgroTech ────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Configurar fontes e cores de fundo com alta nitidez */
 html, body, [class*="css"] {
-    font-family: 'Outfit', sans-serif;
-    color: #f5eedf !important;
+    font-family: 'Inter', sans-serif;
+    color: #d4ecd4 !important;
     font-size: 1.05rem;
 }
 
 [data-testid="stAppViewContainer"] {
-    background-color: #1a1615 !important;
+    background-color: #0f1f0f !important;
 }
 
 [data-testid="stSidebar"] {
-    background-color: #120f0e !important;
-    border-right: 2px solid rgba(184, 115, 51, 0.3);
+    background-color: #091409 !important;
+    border-right: 2px solid rgba(76, 175, 80, 0.25);
 }
 
-/* Colorir labels e textos do sidebar para ficarem muito evidentes */
-[data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
-    color: #f5eedf !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span {
+    color: #c8e6c9 !important;
+    font-weight: 600 !important;
+    font-size: 1.05rem !important;
 }
 
-/* Estilizar títulos globais da página (markdown) */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cinzel', serif !important;
-    font-weight: 800 !important;
-    color: #d4af37 !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 700 !important;
+    color: #81c784 !important;
     letter-spacing: 1px;
 }
 
-/* Título principal com gradiente metálico espesso */
 .main-title {
-    font-family: 'Cinzel', serif;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 3.2rem;
-    font-weight: 900;
-    background: linear-gradient(135deg, #f1c40f 0%, #d4af37 40%, #e67e22 100%);
+    font-weight: 700;
+    background: linear-gradient(135deg, #69f0ae 0%, #4caf50 45%, #d4a017 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     margin-bottom: 0px;
-    padding-bottom: 5px;
 }
 
 .sub-title {
-    color: #e5cda8;
-    font-size: 1.25rem;
-    font-weight: 700;
+    color: #a5d6a7;
+    font-size: 1.15rem;
+    font-weight: 600;
     margin-bottom: 25px;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
-/* Card de Resultado de Previsão */
 .prediction-card {
-    background: rgba(30, 26, 24, 0.9);
-    border: 2px solid rgba(184, 115, 51, 0.45);
-    border-radius: 8px;
+    background: rgba(15, 40, 15, 0.95);
+    border: 2px solid rgba(76, 175, 80, 0.4);
+    border-radius: 10px;
     padding: 24px;
     margin-top: 15px;
     margin-bottom: 25px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(184, 115, 51, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(76, 175, 80, 0.05);
     position: relative;
 }
 
@@ -102,374 +98,397 @@ h1, h2, h3, h4, h5, h6 {
     content: '';
     position: absolute;
     top: 5px; left: 5px; right: 5px; bottom: 5px;
-    border: 1px dashed rgba(184, 115, 51, 0.25);
-    border-radius: 6px;
+    border: 1px dashed rgba(76, 175, 80, 0.2);
+    border-radius: 8px;
     pointer-events: none;
 }
 
-.prediction-species {
-    font-family: 'Cinzel', serif;
+.prediction-culture {
+    font-family: 'Rajdhani', sans-serif;
     font-size: 2.6rem;
-    font-weight: 900;
-    color: #f1c40f;
-    text-shadow: 0 0 12px rgba(241, 196, 15, 0.4);
-    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: #69f0ae;
+    text-shadow: 0 0 15px rgba(105, 240, 174, 0.4);
+    letter-spacing: 2px;
 }
 
-/* Botão de bronze robusto */
 div.stButton > button {
-    background: linear-gradient(135deg, #d4af37 0%, #b87333 100%) !important;
-    color: #120f0e !important;
-    border: 2px solid rgba(184, 115, 51, 0.6) !important;
+    background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%) !important;
+    color: #f1f8e9 !important;
+    border: 2px solid rgba(76, 175, 80, 0.5) !important;
     padding: 12px 28px !important;
-    font-family: 'Cinzel', serif !important;
-    font-weight: 900 !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-weight: 700 !important;
     font-size: 1.1rem !important;
-    letter-spacing: 1.5px !important;
-    border-radius: 6px !important;
-    box-shadow: 0 4px 15px rgba(184, 115, 51, 0.3) !important;
+    letter-spacing: 2px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.25) !important;
     transition: all 0.3s ease !important;
     width: 100% !important;
 }
 
 div.stButton > button:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(241, 196, 15, 0.45) !important;
-    background: linear-gradient(135deg, #f1c40f 0%, #d4af37 100%) !important;
-    color: #120f0e !important;
+    box-shadow: 0 6px 20px rgba(105, 240, 174, 0.4) !important;
+    background: linear-gradient(135deg, #69f0ae 0%, #4caf50 100%) !important;
+    color: #0f1f0f !important;
 }
 
-/* Estilização de Tabelas de Medição e Dados */
-table {
-    font-size: 1.15rem !important;
-    font-weight: 600 !important;
-    color: #f5eedf !important;
-    width: 100%;
-}
-th {
-    font-family: 'Cinzel', serif !important;
-    font-weight: 800 !important;
-    color: #d4af37 !important;
-    background-color: #231f1d !important;
-}
-td {
-    font-weight: 600 !important;
-}
+table { font-size: 1.1rem !important; font-weight: 600 !important; color: #d4ecd4 !important; width: 100%; }
+th { font-family: 'Rajdhani', sans-serif !important; font-weight: 700 !important; color: #81c784 !important; background-color: #1a2e1a !important; }
+td { font-weight: 500 !important; }
 
-/* Customização de dataframes interativos */
 div[data-testid="stTable"], div[data-testid="stDataFrame"] {
-    background-color: #1e1a18 !important;
-    border: 2px solid #3c3029 !important;
-    border-radius: 6px;
-}
-
-.block-container {
-    padding-top: 2.5rem;
-    padding-bottom: 2.5rem;
-}
-
-hr {
-    border-color: rgba(184, 115, 51, 0.3) !important;
-    border-width: 2px !important;
-}
-
-/* Container de upload steampunk */
-div[data-testid="stFileUploader"] {
-    background-color: #1e1a18 !important;
-    border: 2px dashed rgba(184, 115, 51, 0.4) !important;
+    background-color: #132013 !important;
+    border: 2px solid #2d5a2d !important;
     border-radius: 8px;
+}
+
+.block-container { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+
+hr { border-color: rgba(76, 175, 80, 0.25) !important; border-width: 2px !important; }
+
+div[data-testid="stFileUploader"] {
+    background-color: #132013 !important;
+    border: 2px dashed rgba(76, 175, 80, 0.35) !important;
+    border-radius: 10px;
     padding: 20px;
 }
+
+/* Slider track verde */
+[data-testid="stSlider"] > div > div > div { background: linear-gradient(90deg, #2e7d32, #4caf50) !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# 1. Carregar Modelo do Tab 1 (Morfometria)
+# ─── Ícones por cultura ────────────────────────────────────────────────────────
+CULTURA_ICONES = {
+    'Milho':  '🌽',
+    'Soja':   '🫘',
+    'Arroz':  '🌾',
+    'Trigo':  '🌾',
+    'Feijao': '🫘',
+}
+
+CULTURA_NOME_PT = {
+    'Milho':  'Milho',
+    'Soja':   'Soja',
+    'Arroz':  'Arroz',
+    'Trigo':  'Trigo',
+    'Feijao': 'Feijão',
+}
+
+# ─── Loaders ──────────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_morphology_assets():
     try:
-        model = joblib.load('penguin_species_predictor_model.pkl')
+        model    = joblib.load('seed_classifier_model.pkl')
         features = joblib.load('model_features.pkl')
-        classes = joblib.load('model_classes.pkl')
+        classes  = joblib.load('model_classes.pkl')
         return model, features, classes
     except FileNotFoundError:
-        st.error("Erro: Arquivos do modelo não encontrados. Por favor, execute 'train_model.py' primeiro.")
+        st.error("❌ Modelo não encontrado. Execute 'python train_model.py' primeiro.")
         st.stop()
 
-# 2. Carregar Modelo do Tab 2 (Processamento de Imagem - CLIP)
 @st.cache_resource
 def load_clip_assets():
-    with st.spinner("🔧 Calibrando Óptica de Visão Computacional (Carregando CLIP local)..."):
-        model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+    with st.spinner("🌿 Carregando sistema de visão computacional (CLIP)..."):
+        model     = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
         processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         return model, processor
 
-# Cabeçalho global
-st.markdown('<h1 class="main-title">⚙️ MECANISMO DE CLASSIFICAÇÃO</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Análise de Espécimes via Aprendizado de Máquina & Medições Físicas</p>', unsafe_allow_html=True)
+@st.cache_data
+def load_seeds_data():
+    try:
+        df = pd.read_csv('seeds_dataset.csv')
+    except FileNotFoundError:
+        st.warning("⚠️ 'seeds_dataset.csv' não encontrado. Execute 'train_model.py' primeiro.")
+        return None
+    return df
 
-# Menu de navegação no painel lateral
-st.sidebar.markdown('### 🧭 NAVEGAÇÃO')
-modo_diagnostico = st.sidebar.radio(
-    "Selecione o método de análise:",
-    ["⚙️ Parâmetros Morfométricos", "📸 Varredura de Imagem"]
+# ─── Cabeçalho ────────────────────────────────────────────────────────────────
+st.markdown('<h1 class="main-title">🌿 MATOSCAN</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Identificador de Culturas de Grãos por Inteligência Artificial</p>', unsafe_allow_html=True)
+
+# ─── Navegação ────────────────────────────────────────────────────────────────
+st.sidebar.markdown('### 🧭 MODO DE ANÁLISE')
+modo = st.sidebar.radio(
+    "Selecione o método:",
+    ["⚙️ Morfometria da Semente", "📸 Varredura de Imagem"]
 )
 
-# ----------------- MODO 1: PARÂMETROS MORFOMÉTRICOS -----------------
-if modo_diagnostico == "⚙️ Parâmetros Morfométricos":
+# ══════════════════════════════════════════════════════════════════════════════
+# MODO 1 — MORFOMETRIA DA SEMENTE
+# ══════════════════════════════════════════════════════════════════════════════
+if modo == "⚙️ Morfometria da Semente":
     model, model_features, model_classes = load_morphology_assets()
 
-    st.sidebar.markdown('### ⚙️ PARÂMETROS DO ESPÉCIME')
-    st.sidebar.write("Calibrar as medições físicas:")
+    st.sidebar.markdown('### 📐 MEDIÇÕES DA SEMENTE')
+    st.sidebar.write("Insira as medidas físicas da amostra:")
 
-    bill_length_mm = st.sidebar.slider('Comprimento do Bico (mm)', 30.0, 60.0, 45.0, step=0.1)
-    bill_depth_mm = st.sidebar.slider('Profundidade do Bico (mm)', 10.0, 25.0, 17.0, step=0.1)
-    flipper_length_mm = st.sidebar.slider('Comprimento da Nadadeira (mm)', 170.0, 240.0, 200.0, step=1.0)
-    body_mass_g = st.sidebar.slider('Massa Corporal (g)', 2500.0, 6500.0, 4000.0, step=50.0)
-    island = st.sidebar.selectbox('Ilha de Coleta', ['Torgersen', 'Biscoe', 'Dream'])
-    sex = st.sidebar.selectbox('Sexo Biológico', ['Male', 'Female'])
+    comprimento_mm = st.sidebar.slider('Comprimento (mm)',      1.0, 25.0, 8.0,  step=0.1)
+    largura_mm     = st.sidebar.slider('Largura (mm)',          1.0, 15.0, 6.0,  step=0.1)
+    espessura_mm   = st.sidebar.slider('Espessura (mm)',        0.5, 12.0, 4.0,  step=0.1)
+    massa_mg       = st.sidebar.slider('Massa (mg)',            5.0, 600.0, 200.0, step=1.0)
 
-    # Organizar a entrada
-    user_input_df = pd.DataFrame([[bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, island, sex]], 
-                                 columns=model_features)
+    # Features derivadas (calculadas automaticamente)
+    area_mm2      = comprimento_mm * largura_mm * np.pi / 4
+    perimetro_mm  = np.pi * (3*(comprimento_mm/2 + largura_mm/2)
+                             - np.sqrt((3*comprimento_mm/2 + largura_mm/2)
+                                       * (comprimento_mm/2 + 3*largura_mm/2)))
+    compacidade   = (4 * np.pi * area_mm2) / (perimetro_mm ** 2)
+    razao_aspecto = comprimento_mm / largura_mm
 
-    # Dados originais para visualização
-    @st.cache_data
-    def load_original_data():
-        try:
-            df = sns.load_dataset('penguins')
-        except Exception:
-            try:
-                df = pd.read_csv('penguins.csv')
-            except Exception:
-                url = "https://github.com/allisonhorst/palmerpenguins/raw/master/inst/extdata/penguins.csv"
-                df = pd.read_csv(url)
-                df.to_csv('penguins.csv', index=False)
-        df.dropna(inplace=True)
-        if 'sex' in df.columns and '.' in df['sex'].unique():
-            df = df[df['sex'] != '.']
-        return df
+    user_input = pd.DataFrame([[
+        comprimento_mm, largura_mm, espessura_mm, massa_mg,
+        area_mm2, perimetro_mm, compacidade, razao_aspecto
+    ]], columns=model_features)
 
-    original_df = load_original_data()
+    seeds_df = load_seeds_data()
 
     col_left, col_right = st.columns([1.1, 1.2], gap="large")
 
     with col_left:
-        st.markdown("### 📋 Calibração Atual")
-        st.markdown(
-            f"""
-            | Medição | Valor Calibrado |
-            | :--- | :--- |
-            | **Comprimento do Bico** | {bill_length_mm} mm |
-            | **Profundidade do Bico** | {bill_depth_mm} mm |
-            | **Comprimento da Nadadeira** | {flipper_length_mm} mm |
-            | **Massa Corporal** | {body_mass_g} g |
-            | **Ilha** | {island} |
-            | **Sexo** | {sex} |
-            """
-        )
+        st.markdown("### 📋 Medições Inseridas")
+        st.markdown(f"""
+        | Parâmetro | Valor |
+        | :--- | :--- |
+        | **Comprimento** | {comprimento_mm:.1f} mm |
+        | **Largura** | {largura_mm:.1f} mm |
+        | **Espessura** | {espessura_mm:.1f} mm |
+        | **Massa** | {massa_mg:.0f} mg |
+        | **Área (calculada)** | {area_mm2:.2f} mm² |
+        | **Perímetro (calculado)** | {perimetro_mm:.2f} mm |
+        | **Compacidade** | {compacidade:.3f} |
+        | **Razão de Aspecto** | {razao_aspecto:.2f} |
+        """)
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        predict_clicked = st.sidebar.button('INICIAR DIAGNÓSTICO ⚙️')
-        
+
+        predict_clicked = st.sidebar.button("🌿 ANALISAR CULTURA")
+
         if predict_clicked or 'prediction_done' in st.session_state:
             st.session_state.prediction_done = True
-            st.markdown("### 🔮 Resultado do Diagnóstico")
-            
+            st.markdown("### 🔬 Resultado da Análise")
+
             try:
-                prediction = model.predict(user_input_df)
-                prediction_proba = model.predict_proba(user_input_df)
-                predicted_species = prediction[0]
-                
-                # Card
+                prediction       = model.predict(user_input)
+                prediction_proba = model.predict_proba(user_input)
+                predicted        = prediction[0]
+                icone            = CULTURA_ICONES.get(predicted, '🌱')
+                nome_pt          = CULTURA_NOME_PT.get(predicted, predicted)
+
                 st.markdown(f"""
                 <div class="prediction-card">
-                    <span style="font-size: 0.9rem; color: #a49788; text-transform: uppercase; letter-spacing: 1px;">Espécie Diagnosticada</span>
-                    <div class="prediction-species">🐧 {predicted_species}</div>
-                    <div style="margin-top: 10px; font-size: 0.95rem; line-height: 1.4; color: #dfd5c6;">
-                        O mecanismo identificou o espécime com base nas assinaturas morfométricas calibradas.
+                    <span style="font-size:0.85rem; color:#7bab7b; text-transform:uppercase; letter-spacing:1px;">Cultura Identificada</span>
+                    <div class="prediction-culture">{icone} {nome_pt}</div>
+                    <div style="margin-top:10px; font-size:0.95rem; color:#a5d6a7; line-height:1.5;">
+                        O modelo identificou a semente com base nas assinaturas morfométricas fornecidas.
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Tabela de Probabilidades
-                st.markdown("#### Matriz de Probabilidades")
-                proba_df = pd.DataFrame(prediction_proba, columns=model_classes).transpose()
-                proba_df.columns = ['Confiabilidade']
-                st.dataframe(proba_df.style.format({"Confiabilidade": "{:.2%}"}), use_container_width=True)
-                
-                # Gráfico
+
+                # Tabela de probabilidades
+                st.markdown("#### Probabilidades por Cultura")
+                proba_df = pd.DataFrame(
+                    prediction_proba,
+                    columns=[CULTURA_NOME_PT.get(c, c) for c in model_classes]
+                ).transpose()
+                proba_df.columns = ['Confiança']
+                st.dataframe(proba_df.style.format({"Confiança": "{:.2%}"}), use_container_width=True)
+
+                # Gráfico de barras
                 fig, ax = plt.subplots(figsize=(6, 2.5))
                 fig.patch.set_facecolor('none')
                 ax.set_facecolor('none')
-                colors = ['#d4af37' if c == predicted_species else '#8c5c30' for c in model_classes]
-                bars = ax.barh(model_classes, proba_df['Confiabilidade'], color=colors, height=0.5, edgecolor='#3c3029', linewidth=1)
+                labels_pt = [CULTURA_NOME_PT.get(c, c) for c in model_classes]
+                colors    = ['#69f0ae' if c == predicted else '#2e5a2e' for c in model_classes]
+                bars = ax.barh(labels_pt, prediction_proba[0], color=colors, height=0.5,
+                               edgecolor='#2d5a2d', linewidth=1)
                 ax.spines['top'].set_visible(False)
                 ax.spines['right'].set_visible(False)
                 ax.spines['bottom'].set_visible(False)
-                ax.spines['left'].set_color('#8c5c30')
-                ax.tick_params(axis='both', colors='#dfd5c6', labelsize=10)
+                ax.spines['left'].set_color('#4caf50')
+                ax.tick_params(axis='both', colors='#a5d6a7', labelsize=10)
                 ax.xaxis.set_visible(False)
-                
                 for bar in bars:
-                    width = bar.get_width()
-                    ax.text(width + 0.02, bar.get_y() + bar.get_height()/2, f'{width:.1%}', 
-                            va='center', ha='left', color='#d4af37', fontweight='bold', fontsize=10)
+                    w = bar.get_width()
+                    ax.text(w + 0.01, bar.get_y() + bar.get_height()/2,
+                            f'{w:.1%}', va='center', ha='left',
+                            color='#69f0ae', fontweight='bold', fontsize=10)
                 plt.tight_layout()
                 st.pyplot(fig)
-                
+
             except Exception as e:
-                st.error(f"Falha no diagnóstico: {e}")
+                st.error(f"Falha na análise: {e}")
         else:
-            st.info("💡 Acione o botão **INICIAR DIAGNÓSTICO** no painel lateral para rodar a inferência.")
+            st.info("💡 Ajuste as medições e clique em **🌿 ANALISAR CULTURA** no painel lateral.")
 
     with col_right:
-        st.markdown("### 📈 Mapeamento Populacional")
-        st.write("Posicionamento do espécime calibrado em relação à distribuição histórica:")
-        
-        steampunk_palette = {"Adelie": "#a47551", "Chinstrap": "#d4af37", "Gentoo": "#5c4033"}
-        
-        fig_scatter, ax_scatter = plt.subplots(figsize=(7, 4.5))
-        sns.scatterplot(
-            data=original_df, x='bill_length_mm', y='bill_depth_mm', hue='species', 
-            palette=steampunk_palette, alpha=0.6, s=40, ax=ax_scatter, edgecolor='#1a1615', linewidth=0.5
-        )
-        ax_scatter.scatter(
-            bill_length_mm, bill_depth_mm, color='#ff7f50', edgecolor='white', s=250, 
-            marker='*', label='Calibração Atual', zorder=5, linewidths=1.5
-        )
-        ax_scatter.set_title('Morfologia do Bico (Comprimento vs. Profundidade)', fontsize=11, fontweight='bold', pad=12, family='Cinzel')
-        ax_scatter.set_xlabel('Comprimento do Bico (mm)', fontsize=9)
-        ax_scatter.set_ylabel('Profundidade do Bico (mm)', fontsize=9)
-        ax_scatter.legend(frameon=True, facecolor='#120f0e', edgecolor='#3c3029', framealpha=0.9)
-        ax_scatter.spines['top'].set_visible(False)
-        ax_scatter.spines['right'].set_visible(False)
-        ax_scatter.grid(True, linestyle=':', alpha=0.1)
-        plt.tight_layout()
-        st.pyplot(fig_scatter)
-        
-        fig_hist, ax_hist = plt.subplots(figsize=(7, 4.5))
-        sns.histplot(
-            data=original_df, x='flipper_length_mm', hue='species', palette=steampunk_palette,
-            kde=True, multiple="stack", alpha=0.4, ax=ax_hist, edgecolor='#1a1615', linewidth=0.5
-        )
-        ax_hist.axvline(
-            flipper_length_mm, color='#ff7f50', linestyle='--', linewidth=2, 
-            label=f'Atual ({int(flipper_length_mm)} mm)'
-        )
-        ax_hist.set_title('Distribuição da Nadadeira', fontsize=11, fontweight='bold', pad=12, family='Cinzel')
-        ax_hist.set_xlabel('Comprimento da Nadadeira (mm)', fontsize=9)
-        ax_hist.set_ylabel('Frequência', fontsize=9)
-        ax_hist.legend(frameon=True, facecolor='#120f0e', edgecolor='#3c3029', framealpha=0.9)
-        ax_hist.spines['top'].set_visible(False)
-        ax_hist.spines['right'].set_visible(False)
-        ax_hist.grid(True, linestyle=':', alpha=0.1)
-        plt.tight_layout()
-        st.pyplot(fig_hist)
+        st.markdown("### 📊 Distribuição Populacional")
+
+        if seeds_df is not None:
+            palette = {
+                'Milho':  '#69f0ae',
+                'Soja':   '#d4a017',
+                'Arroz':  '#4fc3f7',
+                'Trigo':  '#ffb74d',
+                'Feijao': '#ef5350',
+            }
+
+            # Scatter — Comprimento vs Largura
+            fig1, ax1 = plt.subplots(figsize=(7, 4.5))
+            sns.scatterplot(
+                data=seeds_df, x='comprimento_mm', y='largura_mm',
+                hue='cultura', palette=palette, alpha=0.5, s=30, ax=ax1,
+                edgecolor='#0f1f0f', linewidth=0.3
+            )
+            ax1.scatter(
+                comprimento_mm, largura_mm, color='#ffffff',
+                edgecolor='#69f0ae', s=280, marker='*',
+                label='Amostra Atual', zorder=5, linewidths=1.5
+            )
+            ax1.set_title('Comprimento × Largura da Semente', fontsize=11,
+                          fontweight='bold', pad=12, family='Rajdhani')
+            ax1.set_xlabel('Comprimento (mm)', fontsize=9)
+            ax1.set_ylabel('Largura (mm)', fontsize=9)
+            ax1.legend(frameon=True, facecolor='#091409', edgecolor='#2d5a2d',
+                       framealpha=0.9, fontsize=8)
+            ax1.spines['top'].set_visible(False)
+            ax1.spines['right'].set_visible(False)
+            ax1.grid(True, linestyle=':', alpha=0.15)
+            plt.tight_layout()
+            st.pyplot(fig1)
+
+            # Histograma — Massa por cultura
+            fig2, ax2 = plt.subplots(figsize=(7, 4.5))
+            sns.histplot(
+                data=seeds_df, x='massa_mg', hue='cultura', palette=palette,
+                kde=True, multiple="stack", alpha=0.4, ax=ax2,
+                edgecolor='#0f1f0f', linewidth=0.3
+            )
+            ax2.axvline(
+                massa_mg, color='#ffffff', linestyle='--', linewidth=2,
+                label=f'Amostra ({massa_mg:.0f} mg)'
+            )
+            ax2.set_title('Distribuição de Massa por Cultura', fontsize=11,
+                          fontweight='bold', pad=12, family='Rajdhani')
+            ax2.set_xlabel('Massa (mg)', fontsize=9)
+            ax2.set_ylabel('Frequência', fontsize=9)
+            ax2.legend(frameon=True, facecolor='#091409', edgecolor='#2d5a2d',
+                       framealpha=0.9, fontsize=8)
+            ax2.spines['top'].set_visible(False)
+            ax2.spines['right'].set_visible(False)
+            ax2.grid(True, linestyle=':', alpha=0.15)
+            plt.tight_layout()
+            st.pyplot(fig2)
+        else:
+            st.info("Execute 'train_model.py' para gerar os dados de referência.")
 
 
-# ----------------- MODO 2: VARREDURA DE IMAGEM (CLIP) -----------------
+# ══════════════════════════════════════════════════════════════════════════════
+# MODO 2 — VARREDURA DE IMAGEM (CLIP)
+# ══════════════════════════════════════════════════════════════════════════════
 else:
-    st.markdown("### 📸 Diagnóstico por Análise de Imagem")
-    st.write("Anexe a fotografia de um pinguim e o mecanismo utilizará Visão Computacional profunda (modelo local CLIP) para identificar a espécie.")
+    st.markdown("### 📸 Identificação por Imagem da Planta")
+    st.write("Faça upload de uma foto da planta ou grão e o MatoScan utilizará Visão Computacional (CLIP) para identificar a cultura.")
 
     col_upload, col_result = st.columns([1, 1], gap="large")
 
     with col_upload:
-        st.markdown("#### 📂 Entrada de Mídia")
+        st.markdown("#### 📂 Imagem da Planta")
         uploaded_file = st.file_uploader(
-            "Arraste ou selecione a imagem do pinguim:",
+            "Arraste ou selecione a imagem:",
             type=["png", "jpg", "jpeg"]
         )
 
         if uploaded_file is not None:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Fotografia Carregada", use_container_width=True)
-            
+            st.image(image, caption="Imagem Carregada", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
-            diagnosticar = st.button("INICIAR DIAGNÓSTICO VISUAL ⚙️")
+            diagnosticar = st.button("🌿 IDENTIFICAR CULTURA")
         else:
-            st.info("💡 Por favor, anexe uma imagem de pinguim para iniciar o mecanismo óptico.")
+            st.info("💡 Envie uma foto da planta, folha ou grão para iniciar a identificação.")
 
     with col_result:
-        st.markdown("#### 🔮 Resultados da Análise Óptica")
-        
+        st.markdown("#### 🔬 Resultado da Análise Visual")
+
         if uploaded_file is not None and (diagnosticar or 'vision_prediction_done' in st.session_state):
             st.session_state.vision_prediction_done = True
-            
-            # Carregar pesos locais de processamento de imagem
+
             clip_model, clip_processor = load_clip_assets()
-            
-            with st.status("⚙️ Executando Varredura Óptica Local...", expanded=True) as status:
-                st.write("Focalizando lentes ópticas...")
-                time.sleep(0.6)
-                st.write("Processando dimensões dos pixels...")
+
+            # Culturas e prompts descritivos para o CLIP
+            culturas_clip = ['Milho', 'Soja', 'Arroz', 'Trigo', 'Feijao']
+            prompts_clip  = [
+                "a photo of a corn plant with large green leaves and tall stalk",
+                "a photo of a soybean plant with small oval leaves and pods",
+                "a photo of a rice plant growing in water with long thin leaves",
+                "a photo of a wheat plant with golden grain spikes",
+                "a photo of a bean plant with climbing vines and bean pods",
+            ]
+
+            with st.status("🌿 Processando Imagem...", expanded=True) as status:
+                st.write("Preparando imagem para análise...")
                 time.sleep(0.5)
-                st.write("Computando vetor de proximidade visual (CLIP)...")
-                
-                # Executar classificação zero-shot
-                labels = ["Adelie penguin", "Chinstrap penguin", "Gentoo penguin"]
-                
-                # O CLIP entende melhor com prompts contextualizados
-                prompts = [f"a photo of an {label}" for label in labels]
-                
+                st.write("Extraindo características visuais (CLIP)...")
+                time.sleep(0.5)
+                st.write("Computando similaridade com culturas conhecidas...")
+
                 inputs = clip_processor(
-                    text=prompts, 
-                    images=image, 
-                    return_tensors="pt", 
+                    text=prompts_clip,
+                    images=image,
+                    return_tensors="pt",
                     padding=True
                 )
-                
+
                 with torch.no_grad():
                     outputs = clip_model(**inputs)
-                
-                # Extrair probabilidades
-                logits_per_image = outputs.logits_per_image
-                probs = logits_per_image.softmax(dim=1).numpy()[0]
-                
-                status.update(label="Varredura concluída com sucesso!", state="complete", expanded=False)
-            
-            # Mapear resultados
-            classes_mapeadas = ["Adelie", "Chinstrap", "Gentoo"]
-            predicted_idx = np.argmax(probs)
-            predicted_species = classes_mapeadas[predicted_idx]
-            
-            # Card
+
+                logits = outputs.logits_per_image
+                probs  = logits.softmax(dim=1).numpy()[0]
+
+                status.update(label="✅ Análise concluída!", state="complete", expanded=False)
+
+            predicted_idx  = int(np.argmax(probs))
+            predicted      = culturas_clip[predicted_idx]
+            icone          = CULTURA_ICONES.get(predicted, '🌱')
+            nome_pt        = CULTURA_NOME_PT.get(predicted, predicted)
+
             st.markdown(f"""
             <div class="prediction-card">
-                <span style="font-size: 0.9rem; color: #a49788; text-transform: uppercase; letter-spacing: 1px;">Espécie Diagnosticada por Imagem</span>
-                <div class="prediction-species">🐧 {predicted_species}</div>
-                <div style="margin-top: 10px; font-size: 0.95rem; line-height: 1.4; color: #dfd5c6;">
-                    Varredura óptica realizada localmente via rede neural profunda.
+                <span style="font-size:0.85rem; color:#7bab7b; text-transform:uppercase; letter-spacing:1px;">Cultura Identificada por Imagem</span>
+                <div class="prediction-culture">{icone} {nome_pt}</div>
+                <div style="margin-top:10px; font-size:0.95rem; color:#a5d6a7; line-height:1.5;">
+                    Análise realizada localmente via rede neural profunda (CLIP).
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Tabela de Confiança
-            st.markdown("#### Matriz de Probabilidades Visuais")
-            proba_df = pd.DataFrame(probs, index=classes_mapeadas, columns=['Confiabilidade Visual'])
-            st.dataframe(proba_df.style.format({"Confiabilidade Visual": "{:.2%}"}), use_container_width=True)
-            
-            # Gráfico de barras horizontais personalizado (Steampunk tones)
+
+            # Tabela de probabilidades
+            st.markdown("#### Similaridade Visual por Cultura")
+            nomes_pt  = [CULTURA_NOME_PT.get(c, c) for c in culturas_clip]
+            proba_df  = pd.DataFrame(probs, index=nomes_pt, columns=['Confiança'])
+            st.dataframe(proba_df.style.format({"Confiança": "{:.2%}"}), use_container_width=True)
+
+            # Gráfico
             fig, ax = plt.subplots(figsize=(6, 2.5))
             fig.patch.set_facecolor('none')
             ax.set_facecolor('none')
-            
-            colors = ['#d4af37' if c == predicted_species else '#8c5c30' for c in classes_mapeadas]
-            bars = ax.barh(classes_mapeadas, proba_df['Confiabilidade Visual'], color=colors, height=0.5, edgecolor='#3c3029', linewidth=1)
-            
+            colors = ['#69f0ae' if c == predicted else '#2e5a2e' for c in culturas_clip]
+            bars   = ax.barh(nomes_pt, probs, color=colors, height=0.5,
+                             edgecolor='#2d5a2d', linewidth=1)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
             ax.spines['bottom'].set_visible(False)
-            ax.spines['left'].set_color('#8c5c30')
-            ax.tick_params(axis='both', colors='#dfd5c6', labelsize=10)
+            ax.spines['left'].set_color('#4caf50')
+            ax.tick_params(axis='both', colors='#a5d6a7', labelsize=10)
             ax.xaxis.set_visible(False)
-            
             for bar in bars:
-                width = bar.get_width()
-                ax.text(width + 0.02, bar.get_y() + bar.get_height()/2, f'{width:.1%}', 
-                        va='center', ha='left', color='#d4af37', fontweight='bold', fontsize=10)
-            
+                w = bar.get_width()
+                ax.text(w + 0.01, bar.get_y() + bar.get_height()/2,
+                        f'{w:.1%}', va='center', ha='left',
+                        color='#69f0ae', fontweight='bold', fontsize=10)
             plt.tight_layout()
             st.pyplot(fig)
+
         else:
-            st.info("📊 Os resultados do processamento visual e as porcentagens de confiança aparecerão nesta seção após o diagnóstico.")
+            st.info("📊 O resultado da análise visual aparecerá aqui após o envio da imagem.")

@@ -7,7 +7,6 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-.eggs/
 
 # Ambientes virtuais
 venv/
@@ -15,15 +14,10 @@ env/
 .env
 .venv
 
-# Dataset local (será baixado automaticamente)
-penguins.csv
-
 # Imagens de teste locais
-test_gentoo.jpg
 *.jpg
 *.jpeg
 *.png
-!docs/
 
 # Modelos grandes (PyTorch / HuggingFace cache)
 *.bin
@@ -32,15 +26,14 @@ test_gentoo.jpg
 # Cache do Hugging Face
 ~/.cache/huggingface/
 
-# Jupyter Notebooks
-.ipynb_checkpoints/
-*.ipynb
+# Modelos treinados (.pkl)  
+# Descomente se não quiser versionar os .pkl (são leves, ~4KB cada)
+# *.pkl
 
 # IDEs
 .vscode/
 .idea/
 *.swp
-*.swo
 
 # OS
 .DS_Store
@@ -49,5 +42,8 @@ Thumbs.db
 # Streamlit
 .streamlit/
 
-# PDF do tutorial (arquivo pesado)
+# PDF
 *.pdf
+
+# Modelos pré-treinados antigos (pinguins)
+penguin_species_predictor_model.pkl
