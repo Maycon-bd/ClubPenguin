@@ -88,7 +88,7 @@ O sistema abrirá automaticamente no navegador no endereço `http://localhost:85
 A varredura atualizada do diretório do projeto confirmou a seguinte organização de arquivos:
 
 ```
-ClubPenguin/ (Futuro MatoScan)
+MatoScan/
 ├── app.py                         # Código da aplicação Streamlit (UI Premium + CLIP)
 ├── train_model.py                 # Script de simulação de dados e treinamento RF
 ├── requirements.txt               # Dependências do Python (Streamlit, PyTorch, etc.)

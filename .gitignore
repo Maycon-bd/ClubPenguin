@@ -45,5 +45,4 @@ Thumbs.db
 # PDF
 *.pdf
 
-# Modelos pré-treinados antigos (pinguins)
-penguin_species_predictor_model.pkl
+
