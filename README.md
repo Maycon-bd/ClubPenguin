@@ -12,40 +12,48 @@
 
 ## 📌 Sobre o Projeto
 
-O **MatoScan** é uma plataforma AgriTech projetada para análise e identificação instantânea de sementes e culturas agrícolas. A aplicação possui uma interface moderna e responsiva inspirada em cockpits de monitoramento agrícola (como *John Deere Operations Center* e *Climate FieldView*), operando em dois modos inteligentes:
+O **MatoScan** é uma plataforma AgriTech projetada para análise e identificação instantânea de sementes e culturas agrícolas. A aplicação possui uma interface moderna de painel duplo integrada (estilo *PlantNet* e *PictureThis*), que roda ambos os motores de diagnóstico **simultaneamente na mesma tela principal**:
 
-1. **⚙️ Módulo Morfometria da Semente**: Utiliza algoritmos de **Machine Learning (Random Forest)** para predizer a cultura baseando-se em características físicas e morfológicas inseridas por controles deslizantes interativos.
-2. **📸 Módulo Visão Computacional**: Utiliza a rede neural **CLIP (Contrastive Language-Image Pre-Training)** da OpenAI de forma 100% local para classificar imagens de plantas ou sementes por similaridade semântica contextual.
+1. **📸 Módulo de Análise por Imagem (Visão Computacional - CLIP)** — Localizado na coluna da esquerda, permite fazer upload de fotos da planta ou sementes para predição zero-shot baseada em linguagem-imagem.
+2. **📐 Módulo de Análise Morfológica (Machine Learning - Random Forest)** — Localizado na coluna da direita, utiliza sliders físicos para inserir as medições da semente e calcular métricas geométricas em tempo real.
+3. **🤝 Módulo de Fusão de Sensores (Diagnóstico Consolidado)** — Une as duas análises em um comparador inteligente centralizado, validando se os diagnósticos ópticos e físicos coincidem ou divergem.
 
 ---
 
 ## 📐 Parâmetros Morfológicos e Fórmulas
 
-No modo morfométrico, o sistema recebe quatro medidas primárias da semente e calcula automaticamente quatro métricas geométricas derivadas para enriquecer o vetor de características utilizado na predição:
+O sistema calcula automaticamente quatro variáveis geométricas a partir das medidas primárias inseridas pelos sliders:
 
 ### Características Primárias:
-- **Comprimento ($L$)** (mm) — Medida do eixo maior.
-- **Largura ($W$)** (mm) — Medida do eixo menor.
-- **Espessura ($T$)** (mm) — Profundidade da semente.
-- **Massa ($M$)** (mg) — Peso individual estimado.
+- **Comprimento ($L$)** (mm)
+- **Largura ($W$)** (mm)
+- **Espessura ($T$)** (mm)
+- **Massa ($M$)** (mg)
 
 ### Características Derivadas:
-- **Área Projetada ($A$)** (mm²): Calculada aproximando a projeção da semente a uma elipse:
-  $$A = \frac{\pi \cdot L \cdot W}{4}$$
-- **Perímetro ($P$)** (mm): Calculado utilizando a segunda aproximação de Ramanujan para a circunferência de uma elipse:
-  $$P \approx \pi \left[ 3(a + b) - \sqrt{(3a + b)(a + 3b)} \right]$$
-  *(onde $a = L/2$ e $b = W/2$)*
-- **Compacidade ($C$)**: Razão de circularidade da forma projetada:
-  $$C = \frac{4\pi \cdot A}{P^2}$$
-  *(valores próximos a $1.0$ indicam formas perfeitamente circulares, como a soja)*
-- **Razão de Aspecto ($AR$)**: Relação de alongamento da semente:
-  $$AR = \frac{L}{W}$$
+- **Área Projetada ($A$)** (mm²): $A = \frac{\pi \cdot L \cdot W}{4}$
+- **Perímetro ($P$)** (mm): $P \approx \pi \left[ 3(a + b) - \sqrt{(3a + b)(a + 3b)} \right]$ (Ramanujan, onde $a = L/2, b = W/2$)
+- **Compacidade ($C$)**: $C = \frac{4\pi \cdot A}{P^2}$ (esfericidade)
+- **Razão de Aspecto ($AR$)**: $AR = \frac{L}{W}$ (alongamento)
 
 ---
 
-## 🌾 Guia de Valores de Teste Rápido (Modo Morfometria)
+## 🌾 Guia de Teste Rápido (Fusão de Sensores)
 
-Para validar o funcionamento do classificador de forma imediata e obter **100% de confiança** no resultado, posicione os controles deslizantes da barra lateral com os valores padrão de referência descritos abaixo:
+Para testar o comportamento inteligente de fusão de sensores do **MatoScan**, utilize os cenários abaixo:
+
+### Cenário 1: Diagnóstico Consolidado (Convergência)
+1. Faça upload de uma imagem de **Soja** (ou grão de soja) na coluna esquerda.
+2. Ajuste os sliders da coluna direita com as medidas de referência da soja: `Comprimento: 6.5 mm`, `Largura: 6.0 mm`, `Espessura: 5.0 mm`, `Massa: 195 mg`.
+3. Clique em **Analisar Imagem** e **Analisar Medições**.
+* **Resultado Esperado:** O painel central exibirá um card verde de sucesso com o selo **🏆 Diagnóstico Unificado Confirmado**, indicando que ambas as metodologias confirmaram a cultura Soja.
+
+### Cenário 2: Alerta de Conflito (Divergência)
+1. Com a mesma imagem de **Soja** ativa na esquerda, mude os sliders da direita para medidas de **Feijão**: `Comprimento: 15.0 mm`, `Largura: 9.0 mm`, `Espessura: 7.0 mm`, `Massa: 320 mg`.
+2. Clique em **Analisar Medições**.
+* **Resultado Esperado:** O painel central exibirá um card âmbar de alerta com o selo **⚠️ Alerta de Divergência de Sinais**, notificando que o diagnóstico visual (Soja) e o diagnóstico físico (Feijão) entraram em conflito.
+
+### Tabela de Referência Morfológica:
 
 | Cultura Alvo | Comprimento | Largura | Espessura | Massa | Formato Esperado |
 | :--- | :---: | :---: | :---: | :---: | :--- |
